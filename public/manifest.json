@@ -14,13 +14,13 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.svg",
-      "type": "image/svg+xml",
+      "src": "/icon-192.png",
+      "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/favicon.svg",
-      "type": "image/svg+xml",
+      "src": "/icon-512.png",
+      "type": "image/png",
       "sizes": "512x512"
     }
   ]
