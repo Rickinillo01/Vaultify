@@ -527,10 +527,12 @@ function App() {
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'transactions'), where('userId', '==', user.uid), orderBy('date', 'desc'));
+    const q = query(collection(db, 'transactions'), where('userId', '==', user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const txs = [];
       snapshot.forEach(doc => txs.push({ id: doc.id, ...doc.data() }));
+      // Ordenar localmente por fecha descendente para evitar index compuesto en Firestore
+      txs.sort((a, b) => new Date(b.date) - new Date(a.date));
       setTransactions(txs);
     });
     return () => unsubscribe();
@@ -631,7 +633,7 @@ function App() {
       
       await updateDoc(doc(db, 'accounts', transaction.accountId), updates);
       const txId = Date.now().toString();
-      await setDoc(doc(db, 'users', user.uid, 'transactions', txId), { ...transaction });
+      await setDoc(doc(db, 'transactions', txId), { ...transaction, userId: user.uid });
     }
   };
 
