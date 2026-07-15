@@ -1,0 +1,94 @@
+:root {
+  --bg-color: #0B0F19; /* Very dark blue/charcoal */
+  --card-bg: rgba(26, 32, 44, 0.6); /* Glassmorphism base */
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --accent-green: #10B981; /* Income */
+  --accent-red: #EF4444; /* Withdrawal */
+  --accent-blue: #3B82F6; /* Pinned/Total */
+  --font-family: 'Outfit', system-ui, sans-serif;
+  --header-height: 60px;
+  --bottom-nav-height: 80px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Glassmorphism utility classes */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.glass-card:active {
+  transform: scale(0.98);
+}
+
+.glass-card.pinned {
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 58, 138, 0.3) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.text-green { color: var(--accent-green); }
+.text-red { color: var(--accent-red); }
+.text-secondary { color: var(--text-secondary); }
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
