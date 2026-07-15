@@ -803,10 +803,10 @@ function App() {
       <PreferencesModal isOpen={isPreferencesModalOpen} onClose={() => setIsPreferencesModalOpen(false)} privacyMode={privacyMode} hideWatchlist={hideWatchlist} onTogglePrivacy={handleTogglePrivacy} onToggleWatchlist={handleToggleWatchlist} />
       <ThemeModal isOpen={isThemeModalOpen} onClose={() => setIsThemeModalOpen(false)} activeThemeId={activeThemeId} onSelectTheme={handleSelectTheme} />
 
-      <nav style={{ position: 'fixed', bottom: 0, left: '0', width: '100%', height: 'var(--bottom-nav-height)', background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '0 clamp(1rem, 5vw, 3rem)', zIndex: 10 }}>
-        <button onClick={() => window.scrollTo({top:0, behavior:'smooth'})} style={{ background: 'none', color: 'var(--text-primary)' }}><Home size={28} /></button>
+      <nav style={{ position: 'fixed', bottom: 0, left: '0', width: '100%', height: 'var(--bottom-nav-height)', background: 'linear-gradient(to top, rgba(var(--accent-blue-rgb), 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(var(--accent-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '0 clamp(1rem, 5vw, 3rem)', zIndex: 10 }}>
+        <button onClick={() => window.scrollTo({top:0, behavior:'smooth'})} style={{ background: 'none', color: 'var(--accent-blue)' }}><Home size={28} /></button>
         <button onClick={() => setIsCreateModalOpen(true)} style={{ background: 'var(--accent-blue)', color: 'white', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'translateY(-20px)', boxShadow: '0 10px 25px rgba(var(--accent-blue-rgb), 0.4)' }}><Plus size={32} /></button>
-        <button onClick={() => setIsHistoryModalOpen(true)} style={{ background: 'none', color: 'var(--text-secondary)' }}><History size={28} /></button>
+        <button onClick={() => setIsHistoryModalOpen(true)} style={{ background: 'none', color: 'var(--text-secondary)', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}><History size={28} /></button>
       </nav>
 
       {showTutorial && <TutorialOverlay onComplete={handleCompleteTutorial} />}
