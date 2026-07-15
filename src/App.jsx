@@ -270,6 +270,7 @@ function App() {
   const [isWatchlistModalOpen, setIsWatchlistModalOpen] = useState(false);
   const [activeAccountId, setActiveAccountId] = useState(null);
   const [activeWatchlistId, setActiveWatchlistId] = useState(null);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
 
   // Configuración de Drag & Drop Sensors (requiere 5px de arrastre para activar y permitir clics)
   const sensors = useSensors(
@@ -451,9 +452,36 @@ function App() {
   return (
     <div style={{ padding: 'clamp(1rem, 4vw, 3rem)', paddingBottom: 'var(--bottom-nav-height)' }}>
       <header style={{ height: 'var(--header-height)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Settings size={20} className="text-secondary" /></div>
+        
+        {/* Gear Menu */}
+        <div style={{ position: 'relative' }}>
+          <div 
+            onClick={() => setIsSettingsMenuOpen(!isSettingsMenuOpen)} 
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px', margin: '-8px' }}
+          >
+            <Settings size={20} className="text-secondary" style={{ transition: 'transform 0.2s', transform: isSettingsMenuOpen ? 'rotate(45deg)' : 'rotate(0)' }} />
+          </div>
+
+          {isSettingsMenuOpen && (
+            <>
+              {/* Overlay invisible para cerrar al hacer clic fuera */}
+              <div 
+                style={{ position: 'fixed', inset: 0, zIndex: 9 }} 
+                onClick={() => setIsSettingsMenuOpen(false)}
+              />
+              <div className="sc-settings-dropdown animate-fade-in" style={{ position: 'absolute', top: '100%', left: '0', background: '#16162a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '4px', marginTop: '10px', zIndex: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.3)', minWidth: '140px' }}>
+                <div className="sc-settings-option">Mi Perfil</div>
+                <div className="sc-settings-option">Preferencias</div>
+                <div onClick={handleLogout} className="sc-settings-option" style={{ color: 'var(--accent-red)' }}>
+                  <LogOut size={14} style={{ marginRight: '6px', display: 'inline' }} /> Salir
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
         <h1 style={{ fontSize: '1.1rem', fontWeight: '600', letterSpacing: '1px' }}>VAULTIFY</h1>
-        <div onClick={handleLogout} style={{ color: 'var(--accent-red)', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><LogOut size={16} /> Salir</div>
+        <div style={{ width: '20px' }}></div> {/* Spacer for flex layout */}
       </header>
 
       <main style={{ paddingBottom: '2rem' }}>

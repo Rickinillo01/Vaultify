@@ -92,3 +92,45 @@ input, select, textarea {
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
+
+/* -------------------------------------------------
+ * Dnd Kit - Animaciones extras
+ * ------------------------------------------------- */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------------------------------------------------
+ * ShadowChat Settings Dropdown
+ * ------------------------------------------------- */
+.sc-settings-dropdown {
+  transform-origin: top left;
+  animation: dropdownIn 0.15s ease-out forwards;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.sc-settings-option {
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+}
+
+.sc-settings-option:hover {
+  background: rgba(59, 130, 246, 0.15); /* accent-blue con opacidad */
+  color: var(--accent-blue);
+}
