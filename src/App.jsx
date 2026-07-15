@@ -75,11 +75,11 @@ const TutorialOverlay = ({ onComplete }) => {
 // -----------------------------------------------------------------------------
 // Componentes UI Básicos (Tarjetas)
 // -----------------------------------------------------------------------------
-const AccountCard = ({ account, isPinned, onSelect, privacyMode }) => {
+const AccountCard = ({ account, isPinned, onSelect, privacyMode, isReorderMode }) => {
   const isCrypto = account.currency !== '€';
   const balanceEur = isCrypto ? (account.cryptoBalance * account.rate) : account.balance;
   return (
-    <div className={`glass-card ${isPinned ? 'pinned' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: isPinned ? 'default' : 'grab', position: 'relative' }} onClick={() => !isPinned && onSelect && onSelect(account)}>
+    <div className={`glass-card ${isPinned ? 'pinned' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: isPinned ? 'default' : (isReorderMode ? 'grab' : 'pointer'), position: 'relative' }} onClick={() => !isPinned && !isReorderMode && onSelect && onSelect(account)}>
       {!isPinned && account.excludeFromTotal && (<div style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--text-secondary)' }} title="Excluido del total"><Info size={14} /></div>)}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: isPinned ? 'rgba(var(--accent-blue-rgb), 0.2)' : 'rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: isPinned ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
@@ -166,8 +166,8 @@ const WatchlistCard = ({ coinId, onRemove, privacyMode }) => {
   const color = 'var(--accent-blue)'; // Hereda el color del tema actual
 
   return (
-    <div className="glass-card" style={{ padding: '1.2rem', position: 'relative', cursor: 'grab' }}>
-      {/* Botón borrar (parar propagación para dnd) */}
+    <div className="glass-card" style={{ padding: '1.2rem', position: 'relative', cursor: 'default' }}>
+      {/* Botón borrar */}
       <div 
         onPointerDown={e => e.stopPropagation()} 
         onClick={(e) => { e.stopPropagation(); onRemove(coinId); }} 
@@ -198,14 +198,14 @@ const WatchlistCard = ({ coinId, onRemove, privacyMode }) => {
 // -----------------------------------------------------------------------------
 // Componentes DND Wrappers
 // -----------------------------------------------------------------------------
-const SortableAccountCard = ({ id, ...props }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+const SortableAccountCard = ({ id, isReorderMode, ...props }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !isReorderMode });
   const style = { transform: CSS.Translate.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
-  return ( <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="animate-fade-in"><AccountCard {...props} /></div> );
+  return ( <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="animate-fade-in"><AccountCard {...props} isReorderMode={isReorderMode} /></div> );
 };
 
-const SortableWatchlistCard = ({ id, ...props }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+const SortableWatchlistCard = ({ id, isReorderMode, ...props }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !isReorderMode });
   const style = { transform: CSS.Translate.toString(transform), transition, opacity: isDragging ? 0.3 : 1 };
   return ( <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="animate-fade-in"><WatchlistCard coinId={id} {...props} /></div> );
 };
@@ -456,6 +456,7 @@ function App() {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [hideWatchlist, setHideWatchlist] = useState(false);
   const [activeThemeId, setActiveThemeId] = useState(0);
+  const [isReorderMode, setIsReorderMode] = useState(false);
   
   const [selectedAccount, setSelectedAccount] = useState(null); 
   const [txModalParams, setTxModalParams] = useState(null); 
@@ -719,10 +720,17 @@ function App() {
                 style={{ position: 'fixed', inset: 0, zIndex: 9 }} 
                 onClick={() => setIsSettingsMenuOpen(false)}
               />
-              <div className="sc-settings-dropdown animate-fade-in" style={{ position: 'absolute', top: '100%', left: '0', background: '#16162a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '4px', marginTop: '10px', zIndex: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.3)', minWidth: '140px' }}>
+              <div className="sc-settings-dropdown animate-fade-in" style={{ position: 'absolute', top: '100%', left: '0', background: '#16162a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '4px', marginTop: '10px', zIndex: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.3)', minWidth: '180px' }}>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsProfileModalOpen(true); }}>Mi Perfil</div>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsThemeModalOpen(true); }}>Apariencia (Color)</div>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsPreferencesModalOpen(true); }}>Preferencias</div>
+                <div className="sc-settings-option" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={(e) => { e.stopPropagation(); setIsReorderMode(!isReorderMode); }}>
+                  <span>Reordenar</span>
+                  <div className="toggle-switch" style={{ transform: 'scale(0.8)' }}>
+                    <input type="checkbox" checked={isReorderMode} readOnly />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -751,13 +759,13 @@ function App() {
                 </div>
               ) : (
                 sortedAccounts.map(acc => (
-                  <SortableAccountCard key={acc.id} id={acc.id} account={acc} isPinned={false} onSelect={setSelectedAccount} privacyMode={privacyMode} />
+                  <SortableAccountCard key={acc.id} id={acc.id} account={acc} isPinned={false} onSelect={setSelectedAccount} privacyMode={privacyMode} isReorderMode={isReorderMode} />
                 ))
               )}
             </div>
           </SortableContext>
           <DragOverlay>
-            {activeAccountId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}><AccountCard account={sortedAccounts.find(a => a.id === activeAccountId)} isPinned={false} privacyMode={privacyMode} /></div> : null}
+            {activeAccountId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px', cursor: 'grabbing' }}><AccountCard account={sortedAccounts.find(a => a.id === activeAccountId)} isPinned={false} privacyMode={privacyMode} /></div> : null}
           </DragOverlay>
         </DndContext>
 
@@ -780,13 +788,13 @@ function App() {
                     </div>
                   ) : (
                     watchlist.map(coinId => (
-                      <SortableWatchlistCard key={coinId} id={coinId} onRemove={handleRemoveFromWatchlist} privacyMode={privacyMode} />
+                      <SortableWatchlistCard key={coinId} id={coinId} onRemove={handleRemoveFromWatchlist} privacyMode={privacyMode} isReorderMode={isReorderMode} />
                     ))
                   )}
                 </div>
               </SortableContext>
               <DragOverlay>
-                {activeWatchlistId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}><WatchlistCard coinId={activeWatchlistId} privacyMode={privacyMode} /></div> : null}
+                {activeWatchlistId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px', cursor: 'grabbing' }}><WatchlistCard coinId={activeWatchlistId} privacyMode={privacyMode} /></div> : null}
               </DragOverlay>
             </DndContext>
           </>
