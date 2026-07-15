@@ -623,6 +623,15 @@ function App() {
     }
   };
 
+  const handleDeleteAllAccounts = async () => {
+    if (window.confirm('¿Estás completamente seguro de que quieres borrar TODAS tus fuentes de ahorro? Esta acción es irreversible y pondrá tu saldo a cero.')) {
+      const promises = accounts.map(acc => deleteDoc(doc(db, 'accounts', acc.id)));
+      await Promise.all(promises);
+      setAccountsOrder([]);
+      await setDoc(doc(db, 'users', user.uid), { accountsOrder: [] }, { merge: true });
+    }
+  };
+
   const handleTransaction = async (transaction) => {
     const acc = accounts.find(a => a.id === transaction.accountId);
     if (acc) {
@@ -739,8 +748,13 @@ function App() {
         </div>
 
         <h1 style={{ fontSize: '1.1rem', fontWeight: '600', letterSpacing: '1px' }}>VAULTIFY</h1>
-        <div onClick={handleLogout} style={{ color: 'var(--accent-red)', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <LogOut size={16} /> Salir
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div onClick={handleDeleteAllAccounts} style={{ color: '#F59E0B', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Trash2 size={16} /> Borrar todo
+          </div>
+          <div onClick={handleLogout} style={{ color: 'var(--accent-red)', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <LogOut size={16} /> Salir
+          </div>
         </div>
       </header>
 
