@@ -46,7 +46,7 @@ const AuthScreen = () => {
         <p className="text-secondary">Controla tus finanzas y ahorros</p>
       </div>
       <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '400px' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', textAlign: 'center' }}>{isLogin ? 'Iniciar Sesión' : 'Registrarse'}</h2>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', textAlign: 'center' }}>{isLogin ? 'Iniciar sesión' : 'Registrarse'}</h2>
         {error && <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: 'var(--accent-red)', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center' }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <input type="email" placeholder="Correo electrónico" required value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', marginBottom: '1rem' }} />
