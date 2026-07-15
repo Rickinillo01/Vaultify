@@ -94,19 +94,58 @@ const WatchlistCard = ({ coinId, onRemove }) => {
   const coinNames = { 'bitcoin': 'Bitcoin (BTC)', 'ethereum': 'Ethereum (ETH)', 'litecoin': 'Litecoin (LTC)', 'solana': 'Solana (SOL)', 'usd-coin': 'USDC' };
 
   useEffect(() => {
+    let isMounted = true;
     const fetchMarketData = async () => {
+      const cacheKey = `vaultify_coin_${coinId}`;
+      
       try {
-        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=eur&days=1`);
-        const data = await res.json();
-        if (data.prices && data.prices.length > 0) {
-          const formattedData = data.prices.map(item => ({ price: item[1] }));
-          setChartData(formattedData);
-          const firstPrice = formattedData[0].price; const lastPrice = formattedData[formattedData.length - 1].price;
-          setCurrentPrice(lastPrice); setPriceChange(((lastPrice - firstPrice) / firstPrice) * 100);
+        // 1. Check valid cache (5 minutos)
+        const cachedStr = localStorage.getItem(cacheKey);
+        let cachedData = null;
+        if (cachedStr) {
+          const parsed = JSON.parse(cachedStr);
+          if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+            // Cache is still fresh
+            processChartData(parsed.data);
+            return;
+          }
+          cachedData = parsed.data; // Keep as fallback
         }
-      } catch (err) { console.error(err); } finally { setLoading(false); }
+
+        // 2. Fetch API
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=eur&days=1`);
+        if (!res.ok) throw new Error('Rate limit or API error');
+        const data = await res.json();
+        
+        // 3. Save to cache and process
+        localStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
+        if (isMounted) processChartData(data);
+
+      } catch (err) { 
+        console.error("Error fetching coin:", coinId, err);
+        // Fallback to expired cache if API fails
+        const cachedStr = localStorage.getItem(cacheKey);
+        if (cachedStr && isMounted) {
+          processChartData(JSON.parse(cachedStr).data);
+        }
+      } finally { 
+        if (isMounted) setLoading(false); 
+      }
     };
+
+    const processChartData = (data) => {
+      if (data && data.prices && data.prices.length > 0) {
+        const formattedData = data.prices.map(item => ({ price: item[1] }));
+        setChartData(formattedData);
+        const firstPrice = formattedData[0].price; 
+        const lastPrice = formattedData[formattedData.length - 1].price;
+        setCurrentPrice(lastPrice); 
+        setPriceChange(((lastPrice - firstPrice) / firstPrice) * 100);
+      }
+    };
+
     fetchMarketData();
+    return () => { isMounted = false; };
   }, [coinId]);
 
   if (loading) return <div className="glass-card" style={{ height: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p className="text-secondary">Cargando...</p></div>;
@@ -333,11 +372,30 @@ function App() {
 
   useEffect(() => {
     const fetchCryptoPrices = async () => {
+      const cacheKey = 'vaultify_crypto_rates';
       try {
+        // Try to load cache first to show something immediately
+        const cachedStr = localStorage.getItem(cacheKey);
+        if (cachedStr) {
+          const parsed = JSON.parse(cachedStr);
+          if (Date.now() - parsed.timestamp < 2 * 60 * 1000) {
+             setCryptoRates(parsed.data);
+             return;
+          }
+        }
+        
         const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,litecoin,solana,usd-coin&vs_currencies=eur');
+        if (!response.ok) throw new Error('API Rate Limit');
         const data = await response.json();
-        setCryptoRates({ BTC: data.bitcoin?.eur || 0, ETH: data.ethereum?.eur || 0, LTC: data.litecoin?.eur || 0, SOL: data.solana?.eur || 0, USDC: data['usd-coin']?.eur || 0 });
-      } catch (error) { console.error("Error crypto:", error); }
+        
+        const rates = { BTC: data.bitcoin?.eur || 0, ETH: data.ethereum?.eur || 0, LTC: data.litecoin?.eur || 0, SOL: data.solana?.eur || 0, USDC: data['usd-coin']?.eur || 0 };
+        setCryptoRates(rates);
+        localStorage.setItem(cacheKey, JSON.stringify({ data: rates, timestamp: Date.now() }));
+      } catch (error) { 
+        console.error("Error crypto:", error);
+        const cachedStr = localStorage.getItem(cacheKey);
+        if (cachedStr) setCryptoRates(JSON.parse(cachedStr).data);
+      }
     };
     fetchCryptoPrices();
     const interval = setInterval(fetchCryptoPrices, 60000);
