@@ -723,16 +723,15 @@ function App() {
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsProfileModalOpen(true); }}>Mi Perfil</div>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsThemeModalOpen(true); }}>Apariencia (Color)</div>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsPreferencesModalOpen(true); }}>Preferencias</div>
-                <div onClick={handleLogout} className="sc-settings-option" style={{ color: 'var(--accent-red)' }}>
-                  <LogOut size={14} style={{ marginRight: '6px', display: 'inline' }} /> Salir
-                </div>
               </div>
             </>
           )}
         </div>
 
         <h1 style={{ fontSize: '1.1rem', fontWeight: '600', letterSpacing: '1px' }}>VAULTIFY</h1>
-        <div style={{ width: '20px' }}></div> {/* Spacer for flex layout */}
+        <div onClick={handleLogout} style={{ color: 'var(--accent-red)', fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <LogOut size={16} /> Salir
+        </div>
       </header>
 
       <main style={{ paddingBottom: '2rem' }}>
