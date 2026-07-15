@@ -163,7 +163,7 @@ const WatchlistCard = ({ coinId, onRemove, privacyMode }) => {
   if (loading) return <div className="glass-card" style={{ height: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p className="text-secondary">Cargando...</p></div>;
 
   const isUp = priceChange >= 0;
-  const color = isUp ? 'var(--accent-green)' : 'var(--accent-red)';
+  const color = 'var(--accent-blue)'; // Hereda el color del tema actual
 
   return (
     <div className="glass-card" style={{ padding: '1.2rem', position: 'relative', cursor: 'grab' }}>
@@ -179,7 +179,7 @@ const WatchlistCard = ({ coinId, onRemove, privacyMode }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
         <div>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>{coinNames[coinId]}</h3>
-          <p style={{ color, fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <p style={{ color: color, fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
             {isUp ? <TrendingUp size={14} /> : <ArrowDownRight size={14} />} {isUp ? '+' : ''}{priceChange.toFixed(2)}%
           </p>
         </div>
