@@ -630,7 +630,7 @@ function App() {
       
       await updateDoc(doc(db, 'accounts', transaction.accountId), updates);
       const txId = Date.now().toString();
-      await setDoc(doc(db, 'transactions', txId), { ...transaction, userId: user.uid });
+      await setDoc(doc(db, 'users', user.uid, 'transactions', txId), { ...transaction });
     }
   };
 
@@ -766,7 +766,7 @@ function App() {
           <>
             <div style={{ margin: '3rem 0 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Watchlist (24h)</h2>
-              <button onClick={() => setIsWatchlistModalOpen(true)} style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              <button onClick={() => setIsWatchlistModalOpen(true)} style={{ background: 'transparent', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', fontWeight: 'bold' }}>
                 <Plus size={16} /> Añadir
               </button>
             </div>
