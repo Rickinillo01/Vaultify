@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Coins, Plus, History, Settings, Home, X, Trash2, ArrowUpRight, ArrowDownRight, Info, Edit3, Check, LogOut, ChevronRight, TrendingUp } from 'lucide-react';
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, query, orderBy, where, getDoc } from 'firebase/firestore';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
 import { ResponsiveContainer, LineChart, Line, YAxis } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -63,7 +63,7 @@ const TutorialOverlay = ({ onComplete }) => {
 // -----------------------------------------------------------------------------
 // Componentes UI Básicos (Tarjetas)
 // -----------------------------------------------------------------------------
-const AccountCard = ({ account, isPinned, onSelect }) => {
+const AccountCard = ({ account, isPinned, onSelect, privacyMode }) => {
   const isCrypto = account.currency !== '€';
   const balanceEur = isCrypto ? (account.cryptoBalance * account.rate) : account.balance;
   return (
@@ -75,18 +75,18 @@ const AccountCard = ({ account, isPinned, onSelect }) => {
         </div>
         <div>
           <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>{account.name}</h3>
-          {isCrypto && (<p className="text-secondary" style={{ fontSize: '0.85rem' }}>{(account.cryptoBalance || 0).toFixed(4)} {account.currency}</p>)}
+          {isCrypto && (<p className="text-secondary" style={{ fontSize: '0.85rem' }}>{privacyMode ? '****' : (account.cryptoBalance || 0).toFixed(4)} {account.currency}</p>)}
         </div>
       </div>
       <div style={{ textAlign: 'right', marginTop: account.excludeFromTotal ? '10px' : '0' }}>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{(balanceEur || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</h2>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{privacyMode ? '**** €' : `${(balanceEur || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`}</h2>
         {!isPinned && (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', marginTop: '4px', fontSize: '0.8rem' }}><span className="text-secondary">Ver detalles</span></div>)}
       </div>
     </div>
   );
 };
 
-const WatchlistCard = ({ coinId, onRemove }) => {
+const WatchlistCard = ({ coinId, onRemove, privacyMode }) => {
   const [chartData, setChartData] = useState([]);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
@@ -171,7 +171,7 @@ const WatchlistCard = ({ coinId, onRemove }) => {
             {isUp ? <TrendingUp size={14} /> : <ArrowDownRight size={14} />} {isUp ? '+' : ''}{priceChange.toFixed(2)}%
           </p>
         </div>
-        <div style={{ textAlign: 'right' }}><h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>{currentPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</h2></div>
+        <div style={{ textAlign: 'right' }}><h2 style={{ fontSize: '1.2rem', fontWeight: '700' }}>{privacyMode ? '**** €' : `${currentPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`}</h2></div>
       </div>
       
       <div style={{ width: '100%', height: '50px' }}>
@@ -289,6 +289,113 @@ const AddWatchlistModal = ({ isOpen, onClose, currentWatchlist, onAdd }) => {
 };
 
 // -----------------------------------------------------------------------------
+// Componentes Nuevos: Perfil y Preferencias
+// -----------------------------------------------------------------------------
+const ProfileModal = ({ isOpen, onClose, user, onUpdateName }) => {
+  const [name, setName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user && isOpen) {
+      setName(user.displayName || '');
+    }
+  }, [user, isOpen]);
+
+  if (!isOpen || !user) return null;
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setIsSaving(true);
+    try {
+      await updateProfile(user, { displayName: name.trim() });
+      if (onUpdateName) onUpdateName(name.trim());
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert('Error al actualizar perfil');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getInitials = () => {
+    return (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+  };
+
+  const createdDate = user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('es-ES') : 'Desconocido';
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 200 }}>
+      <div style={{ background: 'var(--bg-color)', width: '90%', maxWidth: '400px', borderRadius: '24px', border: '1px solid var(--card-border)', overflow: 'hidden' }} className="animate-fade-in">
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ fontSize: '1.3rem' }}>Mi Perfil</h2>
+          <button onClick={onClose} style={{ background: 'none', color: 'var(--text-secondary)' }}><X size={24} /></button>
+        </div>
+        <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-green))', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '2.5rem', fontWeight: 'bold', color: 'white', border: '3px solid rgba(255,255,255,0.1)' }}>
+            {getInitials()}
+          </div>
+          <form onSubmit={handleSave} style={{ width: '100%' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Nombre de usuario</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Tu nombre..." style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }} />
+            </div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Email</label>
+              <input type="email" value={user.email} disabled style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)', fontSize: '1rem', outline: 'none', cursor: 'not-allowed' }} />
+            </div>
+            <button type="submit" disabled={isSaving} style={{ width: '100%', padding: '1rem', borderRadius: '12px', fontWeight: 'bold', fontSize: '1.1rem', background: 'var(--accent-blue)', color: 'white', opacity: isSaving ? 0.7 : 1 }}>
+              {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+          </form>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Miembro desde: {createdDate}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PreferencesModal = ({ isOpen, onClose, privacyMode, hideWatchlist, onTogglePrivacy, onToggleWatchlist }) => {
+  if (!isOpen) return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 200 }}>
+      <div style={{ background: 'var(--bg-color)', width: '90%', maxWidth: '400px', borderRadius: '24px', border: '1px solid var(--card-border)', overflow: 'hidden' }} className="animate-fade-in">
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ fontSize: '1.3rem' }}>Preferencias</h2>
+          <button onClick={onClose} style={{ background: 'none', color: 'var(--text-secondary)' }}><X size={24} /></button>
+        </div>
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+            <div>
+              <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Modo Discreto</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ocultar cifras con asteriscos</p>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={privacyMode} onChange={(e) => onTogglePrivacy(e.target.checked)} />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+            <div>
+              <h4 style={{ fontSize: '1rem', marginBottom: '4px' }}>Ocultar Watchlist</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No mostrar tarjetas de criptos</p>
+            </div>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={hideWatchlist} onChange={(e) => onToggleWatchlist(e.target.checked)} />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------------------
 // MAIN APP COMPONENT
 // -----------------------------------------------------------------------------
 function App() {
@@ -301,6 +408,8 @@ function App() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [watchlist, setWatchlist] = useState([]);
   const [accountsOrder, setAccountsOrder] = useState([]);
+  const [privacyMode, setPrivacyMode] = useState(false);
+  const [hideWatchlist, setHideWatchlist] = useState(false);
   
   const [selectedAccount, setSelectedAccount] = useState(null); 
   const [txModalParams, setTxModalParams] = useState(null); 
@@ -310,6 +419,9 @@ function App() {
   const [activeAccountId, setActiveAccountId] = useState(null);
   const [activeWatchlistId, setActiveWatchlistId] = useState(null);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+
 
   // Configuración de Drag & Drop Sensors (requiere 5px de arrastre para activar y permitir clics)
   const sensors = useSensors(
@@ -330,10 +442,14 @@ function App() {
             if (!data.hasSeenTutorial) setShowTutorial(true);
             setWatchlist(data.watchlist || []);
             setAccountsOrder(data.accountsOrder || []);
+            setPrivacyMode(data.privacyMode || false);
+            setHideWatchlist(data.hideWatchlist || false);
           } else {
             setShowTutorial(true);
             setWatchlist([]);
             setAccountsOrder([]);
+            setPrivacyMode(false);
+            setHideWatchlist(false);
           }
         });
       }
@@ -504,6 +620,21 @@ function App() {
     }
   };
 
+  const handleTogglePrivacy = async (value) => {
+    setPrivacyMode(value);
+    await setDoc(doc(db, 'users', user.uid), { privacyMode: value }, { merge: true });
+  };
+
+  const handleToggleWatchlist = async (value) => {
+    setHideWatchlist(value);
+    await setDoc(doc(db, 'users', user.uid), { hideWatchlist: value }, { merge: true });
+  };
+
+  // Fuerza actualización del UI local al cambiar el nombre de usuario desde el perfil
+  const handleProfileNameUpdated = (newName) => {
+    setUser(prev => ({...prev, displayName: newName}));
+  };
+
   if (!authLoaded) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Cargando...</div>;
   if (!user) return <AuthScreen />;
 
@@ -528,8 +659,8 @@ function App() {
                 onClick={() => setIsSettingsMenuOpen(false)}
               />
               <div className="sc-settings-dropdown animate-fade-in" style={{ position: 'absolute', top: '100%', left: '0', background: '#16162a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '4px', marginTop: '10px', zIndex: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.3)', minWidth: '140px' }}>
-                <div className="sc-settings-option">Mi Perfil</div>
-                <div className="sc-settings-option">Preferencias</div>
+                <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsProfileModalOpen(true); }}>Mi Perfil</div>
+                <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsPreferencesModalOpen(true); }}>Preferencias</div>
                 <div onClick={handleLogout} className="sc-settings-option" style={{ color: 'var(--accent-red)' }}>
                   <LogOut size={14} style={{ marginRight: '6px', display: 'inline' }} /> Salir
                 </div>
@@ -543,7 +674,7 @@ function App() {
       </header>
 
       <main style={{ paddingBottom: '2rem' }}>
-        <AccountCard account={pinnedAccount} isPinned={true} />
+        <AccountCard account={pinnedAccount} isPinned={true} privacyMode={privacyMode} />
         
         {/* SECCIÓN FUENTES DE AHORRO (SORTABLE) */}
         <div style={{ margin: '2rem 0 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -559,42 +690,46 @@ function App() {
                 </div>
               ) : (
                 sortedAccounts.map(acc => (
-                  <SortableAccountCard key={acc.id} id={acc.id} account={acc} isPinned={false} onSelect={setSelectedAccount} />
+                  <SortableAccountCard key={acc.id} id={acc.id} account={acc} isPinned={false} onSelect={setSelectedAccount} privacyMode={privacyMode} />
                 ))
               )}
             </div>
           </SortableContext>
           <DragOverlay>
-            {activeAccountId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}><AccountCard account={sortedAccounts.find(a => a.id === activeAccountId)} isPinned={false} /></div> : null}
+            {activeAccountId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}><AccountCard account={sortedAccounts.find(a => a.id === activeAccountId)} isPinned={false} privacyMode={privacyMode} /></div> : null}
           </DragOverlay>
         </DndContext>
 
         {/* SECCIÓN WATCHLIST (SORTABLE) */}
-        <div style={{ margin: '3rem 0 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Watchlist (24h)</h2>
-          <button onClick={() => setIsWatchlistModalOpen(true)} style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-            <Plus size={16} /> Añadir
-          </button>
-        </div>
-
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={(e) => setActiveWatchlistId(e.active.id)} onDragEnd={handleDragEndWatchlist} onDragCancel={() => setActiveWatchlistId(null)}>
-          <SortableContext items={watchlist} strategy={rectSortingStrategy}>
-            <div className="cards-grid">
-              {watchlist.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                  Tu Watchlist está vacía. Añade monedas para ver sus gráficas.
-                </div>
-              ) : (
-                watchlist.map(coinId => (
-                  <SortableWatchlistCard key={coinId} id={coinId} onRemove={handleRemoveFromWatchlist} />
-                ))
-              )}
+        {!hideWatchlist && (
+          <>
+            <div style={{ margin: '3rem 0 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Watchlist (24h)</h2>
+              <button onClick={() => setIsWatchlistModalOpen(true)} style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                <Plus size={16} /> Añadir
+              </button>
             </div>
-          </SortableContext>
-          <DragOverlay>
-            {activeWatchlistId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}><WatchlistCard coinId={activeWatchlistId} /></div> : null}
-          </DragOverlay>
-        </DndContext>
+
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={(e) => setActiveWatchlistId(e.active.id)} onDragEnd={handleDragEndWatchlist} onDragCancel={() => setActiveWatchlistId(null)}>
+              <SortableContext items={watchlist} strategy={rectSortingStrategy}>
+                <div className="cards-grid">
+                  {watchlist.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                      Tu Watchlist está vacía. Añade monedas para ver sus gráficas.
+                    </div>
+                  ) : (
+                    watchlist.map(coinId => (
+                      <SortableWatchlistCard key={coinId} id={coinId} onRemove={handleRemoveFromWatchlist} privacyMode={privacyMode} />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+              <DragOverlay>
+                {activeWatchlistId ? <div style={{ transform: 'scale(1.05)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', borderRadius: '24px' }}><WatchlistCard coinId={activeWatchlistId} privacyMode={privacyMode} /></div> : null}
+              </DragOverlay>
+            </DndContext>
+          </>
+        )}
       </main>
 
       <AccountDetailsModal isOpen={!!selectedAccount} account={selectedAccount} transactions={transactions} onClose={() => setSelectedAccount(null)} onAddFunds={(acc) => setTxModalParams({ account: acc, type: 'income' })} onWithdrawFunds={(acc) => setTxModalParams({ account: acc, type: 'expense' })} onDelete={handleDeleteAccount} onUpdateName={handleUpdateAccountName} />
@@ -602,6 +737,9 @@ function App() {
       <CreateAccountModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onSubmit={handleCreateAccount} />
       <GlobalHistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} transactions={transactions} accounts={accounts} />
       <AddWatchlistModal isOpen={isWatchlistModalOpen} onClose={() => setIsWatchlistModalOpen(false)} currentWatchlist={watchlist} onAdd={handleAddToWatchlist} />
+      
+      <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} user={user} onUpdateName={handleProfileNameUpdated} />
+      <PreferencesModal isOpen={isPreferencesModalOpen} onClose={() => setIsPreferencesModalOpen(false)} privacyMode={privacyMode} hideWatchlist={hideWatchlist} onTogglePrivacy={handleTogglePrivacy} onToggleWatchlist={handleToggleWatchlist} />
 
       <nav style={{ position: 'fixed', bottom: 0, left: '0', width: '100%', height: 'var(--bottom-nav-height)', background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '0 clamp(1rem, 5vw, 3rem)', zIndex: 10 }}>
         <button onClick={() => window.scrollTo({top:0, behavior:'smooth'})} style={{ background: 'none', color: 'var(--text-primary)' }}><Home size={28} /></button>
