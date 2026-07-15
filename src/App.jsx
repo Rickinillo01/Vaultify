@@ -10,6 +10,18 @@ import { db, auth } from './firebase';
 import './index.css';
 
 // -----------------------------------------------------------------------------
+// Temas (Themes)
+// -----------------------------------------------------------------------------
+const THEMES = [
+  { id: 0, name: "Azul Vaultify", color: "#3B82F6", rgb: "59, 130, 246" },
+  { id: 1, name: "Morado Neón", color: "#A855F7", rgb: "168, 85, 247" },
+  { id: 2, name: "Esmeralda", color: "#10B981", rgb: "16, 185, 129" },
+  { id: 3, name: "Rosa Chicle", color: "#F43F5E", rgb: "244, 63, 94" },
+  { id: 4, name: "Naranja Atardecer", color: "#F97316", rgb: "249, 115, 22" },
+  { id: 5, name: "Dorado Premium", color: "#F59E0B", rgb: "245, 158, 11" }
+];
+
+// -----------------------------------------------------------------------------
 // Pantalla de Autenticación & Tutorial
 // -----------------------------------------------------------------------------
 const AuthScreen = () => {
@@ -29,7 +41,7 @@ const AuthScreen = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '2rem', boxSizing: 'border-box', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem', width: '100%' }}>
-        <div style={{ background: 'rgba(59, 130, 246, 0.2)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 1rem', color: 'var(--accent-blue)' }}><Coins size={40} /></div>
+        <div style={{ background: 'rgba(var(--accent-blue-rgb), 0.2)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 1rem', color: 'var(--accent-blue)' }}><Coins size={40} /></div>
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', letterSpacing: '2px' }}>VAULTIFY</h1>
         <p className="text-secondary">Controla tus finanzas y ahorros</p>
       </div>
@@ -70,7 +82,7 @@ const AccountCard = ({ account, isPinned, onSelect, privacyMode }) => {
     <div className={`glass-card ${isPinned ? 'pinned' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: isPinned ? 'default' : 'grab', position: 'relative' }} onClick={() => !isPinned && onSelect && onSelect(account)}>
       {!isPinned && account.excludeFromTotal && (<div style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--text-secondary)' }} title="Excluido del total"><Info size={14} /></div>)}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: isPinned ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: isPinned ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
+        <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: isPinned ? 'rgba(var(--accent-blue-rgb), 0.2)' : 'rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: isPinned ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
           {isPinned ? <Coins size={28} /> : <Coins size={24} />}
         </div>
         <div>
@@ -396,6 +408,39 @@ const PreferencesModal = ({ isOpen, onClose, privacyMode, hideWatchlist, onToggl
 };
 
 // -----------------------------------------------------------------------------
+// Componente de Temas
+// -----------------------------------------------------------------------------
+const ThemeModal = ({ isOpen, onClose, activeThemeId, onSelectTheme }) => {
+  if (!isOpen) return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 200 }}>
+      <div style={{ background: 'var(--bg-color)', width: '90%', maxWidth: '400px', borderRadius: '24px', border: '1px solid var(--card-border)', overflow: 'hidden' }} className="animate-fade-in">
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ fontSize: '1.3rem' }}>Apariencia</h2>
+          <button onClick={onClose} style={{ background: 'none', color: 'var(--text-secondary)' }}><X size={24} /></button>
+        </div>
+        <div style={{ padding: '2rem 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center' }}>
+          {THEMES.map(theme => (
+            <button 
+              key={theme.id}
+              onClick={() => onSelectTheme(theme.id)}
+              style={{ 
+                width: '60px', height: '60px', borderRadius: '50%', background: theme.color, 
+                border: activeThemeId === theme.id ? '3px solid white' : '3px solid transparent',
+                cursor: 'pointer', transition: 'transform 0.2s', 
+                transform: activeThemeId === theme.id ? 'scale(1.1)' : 'scale(1)',
+                boxShadow: activeThemeId === theme.id ? `0 0 20px ${theme.color}` : 'none'
+              }}
+              title={theme.name}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------------------
 // MAIN APP COMPONENT
 // -----------------------------------------------------------------------------
 function App() {
@@ -410,6 +455,7 @@ function App() {
   const [accountsOrder, setAccountsOrder] = useState([]);
   const [privacyMode, setPrivacyMode] = useState(false);
   const [hideWatchlist, setHideWatchlist] = useState(false);
+  const [activeThemeId, setActiveThemeId] = useState(0);
   
   const [selectedAccount, setSelectedAccount] = useState(null); 
   const [txModalParams, setTxModalParams] = useState(null); 
@@ -421,6 +467,7 @@ function App() {
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
 
   // Configuración de Drag & Drop Sensors (requiere 5px de arrastre para activar y permitir clics)
@@ -444,12 +491,14 @@ function App() {
             setAccountsOrder(data.accountsOrder || []);
             setPrivacyMode(data.privacyMode || false);
             setHideWatchlist(data.hideWatchlist || false);
+            setActiveThemeId(data.themeId !== undefined ? data.themeId : 0);
           } else {
             setShowTutorial(true);
             setWatchlist([]);
             setAccountsOrder([]);
             setPrivacyMode(false);
             setHideWatchlist(false);
+            setActiveThemeId(0);
           }
         });
       }
@@ -517,6 +566,13 @@ function App() {
     const interval = setInterval(fetchCryptoPrices, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Aplicar tema de color dinámico
+  useEffect(() => {
+    const theme = THEMES.find(t => t.id === activeThemeId) || THEMES[0];
+    document.documentElement.style.setProperty('--accent-blue', theme.color);
+    document.documentElement.style.setProperty('--accent-blue-rgb', theme.rgb);
+  }, [activeThemeId]);
 
   // Ordenar Accounts para renderizar respetando accountsOrder
   const sortedAccounts = useMemo(() => {
@@ -630,6 +686,11 @@ function App() {
     await setDoc(doc(db, 'users', user.uid), { hideWatchlist: value }, { merge: true });
   };
 
+  const handleSelectTheme = async (themeId) => {
+    setActiveThemeId(themeId);
+    await setDoc(doc(db, 'users', user.uid), { themeId: themeId }, { merge: true });
+  };
+
   // Fuerza actualización del UI local al cambiar el nombre de usuario desde el perfil
   const handleProfileNameUpdated = (newName) => {
     setUser(prev => ({...prev, displayName: newName}));
@@ -660,6 +721,7 @@ function App() {
               />
               <div className="sc-settings-dropdown animate-fade-in" style={{ position: 'absolute', top: '100%', left: '0', background: '#16162a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '4px', marginTop: '10px', zIndex: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.3)', minWidth: '140px' }}>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsProfileModalOpen(true); }}>Mi Perfil</div>
+                <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsThemeModalOpen(true); }}>Apariencia (Color)</div>
                 <div className="sc-settings-option" onClick={() => { setIsSettingsMenuOpen(false); setIsPreferencesModalOpen(true); }}>Preferencias</div>
                 <div onClick={handleLogout} className="sc-settings-option" style={{ color: 'var(--accent-red)' }}>
                   <LogOut size={14} style={{ marginRight: '6px', display: 'inline' }} /> Salir
@@ -740,10 +802,11 @@ function App() {
       
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} user={user} onUpdateName={handleProfileNameUpdated} />
       <PreferencesModal isOpen={isPreferencesModalOpen} onClose={() => setIsPreferencesModalOpen(false)} privacyMode={privacyMode} hideWatchlist={hideWatchlist} onTogglePrivacy={handleTogglePrivacy} onToggleWatchlist={handleToggleWatchlist} />
+      <ThemeModal isOpen={isThemeModalOpen} onClose={() => setIsThemeModalOpen(false)} activeThemeId={activeThemeId} onSelectTheme={handleSelectTheme} />
 
       <nav style={{ position: 'fixed', bottom: 0, left: '0', width: '100%', height: 'var(--bottom-nav-height)', background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '0 clamp(1rem, 5vw, 3rem)', zIndex: 10 }}>
         <button onClick={() => window.scrollTo({top:0, behavior:'smooth'})} style={{ background: 'none', color: 'var(--text-primary)' }}><Home size={28} /></button>
-        <button onClick={() => setIsCreateModalOpen(true)} style={{ background: 'var(--accent-blue)', color: 'white', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'translateY(-20px)', boxShadow: '0 10px 25px rgba(59, 130, 246, 0.4)' }}><Plus size={32} /></button>
+        <button onClick={() => setIsCreateModalOpen(true)} style={{ background: 'var(--accent-blue)', color: 'white', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', transform: 'translateY(-20px)', boxShadow: '0 10px 25px rgba(var(--accent-blue-rgb), 0.4)' }}><Plus size={32} /></button>
         <button onClick={() => setIsHistoryModalOpen(true)} style={{ background: 'none', color: 'var(--text-secondary)' }}><History size={28} /></button>
       </nav>
 

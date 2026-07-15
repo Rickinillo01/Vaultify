@@ -4,9 +4,10 @@
   --card-border: rgba(255, 255, 255, 0.08);
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
-  --accent-green: #10B981; /* Income */
-  --accent-red: #EF4444; /* Withdrawal */
   --accent-blue: #3B82F6; /* Pinned/Total */
+  --accent-blue-rgb: 59, 130, 246;
+  --accent-green: #10B981; /* Ingresos/Subidas */
+  --accent-red: #EF4444; /* Retiros/Bajadas */
   --font-family: 'Outfit', system-ui, sans-serif;
   --header-height: 60px;
   --bottom-nav-height: 80px;
@@ -131,7 +132,7 @@ input, select, textarea {
 }
 
 .sc-settings-option:hover {
-  background: rgba(59, 130, 246, 0.15); /* accent-blue con opacidad */
+  background: rgba(var(--accent-blue-rgb), 0.15); /* accent-blue con opacidad */
   color: var(--accent-blue);
 }
 
